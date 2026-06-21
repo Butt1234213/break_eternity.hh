@@ -1,7 +1,7 @@
 # breaketernity.hh
 breaketernity.hh is a port of breaketernity.js to C++
 
-+ How to install
+# How to install
 
 Add the break_eternity.hh and break_eternity.cpp files to your C++ project's file directory
 
