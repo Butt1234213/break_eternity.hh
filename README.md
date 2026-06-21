@@ -1,4 +1,4 @@
-# breaketernity.hh
+# break_eternity.hh
 breaketernity.hh is a port of breaketernity.js to C++
 
 # How to install
