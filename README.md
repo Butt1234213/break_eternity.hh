@@ -11,8 +11,6 @@ Add these two lines of code on your main file
 
 #include "break_eternity.hh"
 
-#include "break_eternity.cpp"
-
 + you did it!!! 🥰🥰🥰🥰🥰🥰🥰🥰🥰🥰
 
 + Look at break_eternity.hh for the functions that are supported, and look at examples.cpp for some example calculations I did
