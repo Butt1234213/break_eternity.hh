@@ -1,5 +1,4 @@
 #include "break_eternity.hh"
-#include "break_eternity.cpp"
 #include <iostream>
 #include <iomanip>
 

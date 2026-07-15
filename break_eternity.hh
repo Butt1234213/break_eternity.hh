@@ -2,9 +2,27 @@
 #define BREAK_ETERNITY_HH
 
 #include <concepts>
+#include <cmath>
+#include <iostream>
+#include <type_traits>
+#include <algorithm>
 #include <string>
+#include <deque>
 #include <vector>
+#include <sstream>
+#include <stdexcept>
+#include <limits>
 #include <variant>
+
+extern const double EXP_LIMIT;
+extern const double LAYER_LIMIT;
+extern const int MAX_SIGNIFICANT_DIGITS;
+extern const double tolEq_TOLERANCE;
+
+extern const std::vector<std::vector<double long>> CRITICAL_TET_VALUES;
+extern const std::vector<std::vector<double long>> CRITICAL_SLOG_VALUES;
+extern const double long MAGIC_CONSTANT;
+extern const double OTHER_MAGIC_CONSTANT;
 
 class Decimal {
 public:
@@ -41,7 +59,6 @@ public:
 	Decimal(const Sign _sign, const Layer _layer, const Mag _mag) : sign(_sign), layer(_layer), mag(_mag) {}
 	//tertiary constructor, Decimal test("x"), similar to BE's test = new Decimal("x")
 	Decimal(const std::string _string) : sign(signFromStr(_string)), layer(layerFromStr(_string)), mag(magFromStr(_string)) {}
-
 
 	//utilities
 	//pointer manipulation
@@ -334,5 +351,14 @@ public:
 
 	//log10^b(a)
 	static Decimal repLog10(Decimal a, Decimal b);
+	static Decimal rLog10(Decimal a, Decimal b);
 };
+
+extern const Decimal INF;
+extern const Decimal negINF;
+
+Decimal I(Decimal::Mag a);
+Decimal D(Decimal a);
+Decimal FC(Decimal::Sign sign, Decimal::Layer layer, Decimal::Mag mag);
+
 #endif

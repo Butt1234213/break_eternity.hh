@@ -1,15 +1,4 @@
 #include "break_eternity.hh"
-#include <cmath>
-#include <iostream>
-#include <type_traits>
-#include <algorithm>
-#include <string>
-#include <deque>
-#include <vector>
-#include <sstream>
-#include <stdexcept>
-#include <limits>
-
 //the only difference between the static and nonstatic functions is that one of the arguments is a *this, and it has to be the dereferenced pointer due to this being the pointer of the Decimal object
 
 const double EXP_LIMIT = 9e15;
@@ -65,33 +54,29 @@ const std::vector<std::vector<double long>> CRITICAL_SLOG_VALUES = {
 	//base 10
 	{-1.0, -0.8641642839543857, -0.732534623168535, -0.6083127477059322, -0.4934049257184696, -0.3885773075899922, -0.29376029055315767, -0.2083678561173622, -0.13155653399373268, -0.062401588652553186, 0.0},
 };
+const double long MAGIC_CONSTANT = 1.44466786100976613366;
+const double OTHER_MAGIC_CONSTANT = 1.444667861009099;
 
-//only use this shorthand if you are creating 0
-static Decimal N() {
-	return Decimal();
-}
+const Decimal INF = Decimal(1, std::numeric_limits<long long>::max(), std::numeric_limits<double>::infinity());
+const Decimal negINF = Decimal(-1, std::numeric_limits<long long>::max(), std::numeric_limits<double>::infinity());
+//use this shorthand for 0
+//Decimal()
 //only use this shorthand when you are sure a is and will not be a massive number
 //to make a Decimal of a mag that requires division to notate, ex: 1/3 or 5/12, make sure to notate both numbers as doubles -> 1.0/3.0 or 5.0/12.0
-static Decimal I(Decimal::Mag a) {
+Decimal I(Decimal::Mag a) {
 	return Decimal(a);
 }
-//use this shorthand if you are returning an existing Decimal object
-static Decimal D(Decimal a) {
+//use this shorthand if you are returning an existing Decimal object, don't use this, this is bad
+Decimal D(Decimal a) {
 	Decimal::Sign sign = a.sign;
 	Decimal::Layer layer = a.layer;
 	Decimal::Mag mag = a.mag;
 	return Decimal(sign, layer, mag);
 }
 //use this shorthand if you are creating a new Decimal object
-static Decimal FC(Decimal::Sign sign, Decimal::Layer layer, Decimal::Mag mag) {
+Decimal FC(Decimal::Sign sign, Decimal::Layer layer, Decimal::Mag mag) {
 	return Decimal(sign, layer, mag);
 }
-
-const double long MAGIC_CONSTANT = 1.44466786100976613366;
-const double OTHER_MAGIC_CONSTANT = 1.444667861009099;
-
-const Decimal INF = Decimal(1, std::numeric_limits<long long>::max(), std::numeric_limits<double>::infinity());
-const Decimal negINF = Decimal(-1, std::numeric_limits<long long>::max(), std::numeric_limits<double>::infinity());
 
 template<typename T>
 bool Decimal::isZero(T a) {
@@ -113,6 +98,7 @@ Decimal::Sign Decimal::toSign(T a) {
 		return 1;
 	}
 }
+template Decimal::Sign Decimal::toSign<long>(long);
 
 Decimal::Sign Decimal::signFromStr(std::string a) {
 	char front = a.front();
@@ -195,6 +181,7 @@ Decimal::Layer Decimal::layerChecker(T a, Layer b) {
 		return b;
 	}
 }
+template Decimal::Layer Decimal::layerChecker<long>(long, Layer);
 
 template<typename T>
 Decimal::Mag Decimal::setMagBasedOnLayer(T a, Layer b, Sign c) {
@@ -207,6 +194,7 @@ Decimal::Mag Decimal::setMagBasedOnLayer(T a, Layer b, Sign c) {
 		return a;
 	}
 }
+template Decimal::Mag Decimal::setMagBasedOnLayer<long>(long, Layer, Sign);
 
 Decimal* Decimal::toPtr(Decimal a) {
 	return &a;
@@ -472,7 +460,7 @@ Decimal Decimal::clampMin(Decimal a) {
 }
 
 Decimal Decimal::maxabs(Decimal a, Decimal b) {
-	return cmpabs(a, b) > 0 ? D(b) : D(a);
+	return cmpabs(a, b) > 0 ? b : a;
 }
 Decimal Decimal::maxabs(Decimal a) {
 	return maxabs(*this, a);
@@ -492,7 +480,7 @@ Decimal Decimal::clampMax(Decimal a) {
 }
 
 Decimal Decimal::minabs(Decimal a, Decimal b) {
-	return cmpabs(a, b) < 0 ? D(b) : D(a);
+	return cmpabs(a, b) < 0 ? b : a;
 }
 Decimal Decimal::minabs(Decimal a) {
 	return minabs(*this, a);
@@ -507,7 +495,7 @@ Decimal Decimal::clamp(Decimal a, Decimal b) {
 
 Decimal Decimal::floor(Decimal a) {
 	if (a.mag < 0) {
-		return a.sign == -1 ? FC(-1, 0, 1) : N();
+		return a.sign == -1 ? FC(-1, 0, 1) : Decimal();
 	}
 	if (a.sign == -1) return neg(ceil(neg(a)));
 	else if (a.layer == 0) return FC(a.sign, 0, std::floor(a.mag));
@@ -524,7 +512,7 @@ Decimal Decimal::floor() {
 
 Decimal Decimal::ceil(Decimal a) {
 	if (a.mag < 0) {
-		return a.sign == -1 ? FC(1, 0, 1) : N();
+		return a.sign == -1 ? FC(1, 0, 1) : Decimal();
 	}
 	if (a.sign == 1) return neg(floor(neg(a)));
 	else if (a.layer == 0) return FC(a.sign, 0, std::ceil(a.mag));
@@ -690,13 +678,13 @@ Decimal Decimal::invert() {
 Decimal Decimal::add(Decimal a, Decimal b) {
 	Mag x = 0.0;
 	if (a.sign == 0) {
-		return D(b);
+		return b;
 	}
 	if (b.sign == 0) {
-		return D(a);
+		return a;
 	}
 	if ((a.sign == -b.sign) && (a.layer == b.layer) && (a.mag == b.mag)) {
-		return N();
+		return Decimal();
 	}
 
 	if (a.layer >= 2 || b.layer >= 2) {
@@ -723,13 +711,13 @@ Decimal Decimal::add(Decimal a, Decimal b) {
 	int layerb = B.layer * toSign(B.mag);
 
 	if (layera - layerb >= 2) {
-		return D(A);
+		return A;
 	}
 
 	if (layera == 0 && layerb == -1) {
 		x = B.mag - std::log10(A.mag);
 		if (std::abs(x) > MAX_SIGNIFICANT_DIGITS) {
-			return D(A);
+			return A;
 		} else {
 			double _magdiff = std::pow(10, -x);
 			double _mantissa = B.sign + (A.sign * _magdiff);
@@ -740,7 +728,7 @@ Decimal Decimal::add(Decimal a, Decimal b) {
 	if (layera == 1 && layerb == 0) {
 		x = A.mag - std::log10(B.mag);
 		if (std::abs(x) > MAX_SIGNIFICANT_DIGITS) {
-			return D(A);
+			return A;
 		} else {
 			double _magdiff = std::pow(10, x);
 			double _mantissa = B.sign + (A.sign * _magdiff);
@@ -750,7 +738,7 @@ Decimal Decimal::add(Decimal a, Decimal b) {
 
 	x = A.mag - B.mag;
 	if (std::abs(x) > MAX_SIGNIFICANT_DIGITS) {
-		return D(A);
+		return A;
 	} else {
 		double _magdiff = std::pow(10, x);
 		double _mantissa = B.sign + (A.sign * _magdiff);
@@ -794,7 +782,7 @@ Decimal Decimal::minus(Decimal a) {
 
 Decimal Decimal::mul(Decimal a, Decimal b) {
 	if (a.sign == 0 || b.sign == 0) {
-		return N();
+		return Decimal();
 	}
 	if (a.layer == b.layer && a.mag == -b.mag) {
 		return FC(a.sign * b.sign, 0, 1);
@@ -831,7 +819,7 @@ Decimal Decimal::mul(Decimal a, Decimal b) {
 		throw std::invalid_argument("Invalid arguments for multiplication");
 	} catch(const std::invalid_argument e) {
 		std::cerr << "\033[31m" << "Invalid argument error: " << e.what() << "\033[0m" << std::endl;
-		return N();
+		return Decimal();
 	}
 }
 Decimal Decimal::mul(Decimal a) {
@@ -1045,7 +1033,7 @@ Decimal Decimal::ln() {
 
 Decimal Decimal::pow(Decimal a, Decimal b) {
 	if (a.sign == 0) {
-		return b.sign == 0 ? FC(1, 0, 1) : N();
+		return b.sign == 0 ? FC(1, 0, 1) : Decimal();
 	}
 	if (b.sign == 0) {
 		return FC(1, 0, 1);
@@ -1066,7 +1054,7 @@ Decimal Decimal::pow(Decimal a, Decimal b) {
 		} else if (_modulo == 0) {
 			return _result;
 		} else {
-			return N();
+			return Decimal();
 		}
 	}
 	return _result;
@@ -1374,7 +1362,7 @@ double Decimal::d_lambertw(double a) {
 Decimal Decimal::d_lambertw(Decimal a, double b, bool c) {
 	Decimal w, wn, wewz, ew;
 	if (c) {
-		if (tolEq(a, N(), b)) {
+		if (tolEq(a, Decimal(), b)) {
 			return a;
 		}
 		else if (tolEq(a, FC(1, 0, 1), b)) {
@@ -1384,7 +1372,7 @@ Decimal Decimal::d_lambertw(Decimal a, double b, bool c) {
 	}
 	else {
 		try {
-			if (tolEq(a, N(), b)) {
+			if (tolEq(a, Decimal(), b)) {
 				throw std::domain_error("lambert W_-1 function of something > 0");
 			}
 		}
@@ -1495,7 +1483,7 @@ Decimal Decimal::tet(Decimal a, Decimal b, Decimal c, bool d) {
 	//time for computation hell
 	if (_a > 0 && (_a < 1 || _a < MAGIC_CONSTANT) && lte(c, div(lambertw(neg(ln(a)), false), neg(ln(a)))) && (_height > 10000 || !d)) {
 		int _limitHeight = std::min(10000, static_cast<int>(_height));
-		if (eq(_payload, N())) {
+		if (eq(_payload, Decimal())) {
 			_payload = pow(a, _fracHeight);
 		} else if (lt(a, FC(1, 0, 1))) {
 			_payload = mul(pow(_payload, I(1.0 - _fracHeight)), pow(a, pow(_payload, _fracHeight)));
@@ -1556,7 +1544,7 @@ std::vector<double, std::allocator<double>> Decimal::d_ladd(double a, double b) 
 //my awesome custom function, I hope this is faster than BE's layeradd10
 Decimal Decimal::ladd10(Decimal a, Decimal b) {
 	double _fracHeight = toDouble(sub(abs(b), floor(abs(b))));
-	if (eq(_fracHeight, N())) {
+	if (eq(_fracHeight, Decimal())) {
 		return FC(a.mag, a.layer + toLongLong(b), a.mag);
 	}
 	long long _baseHeight = toLongLong(floor(abs(b)));
@@ -1575,7 +1563,7 @@ Decimal Decimal::ladd10(Decimal a, Decimal b) {
 				return FC(_payload.sign * a.sign, _resultMag[0], _resultMag[1]);
 			}
 		} else if (eq(abs(_payload), abs(a))) {
-			return N();
+			return Decimal();
 		} else {
 			return FC(_payload.sign * a.sign, (_payload.layer - a.layer + _resultMag[0] > -1) ? _payload.layer - a.layer + _resultMag[0] : 0, _resultMag[1]);
 		}
@@ -1617,7 +1605,7 @@ Decimal Decimal::ladd(Decimal a, Decimal b, Decimal c, bool d) {
 	}
 
 	Decimal _slogDest = add(slog(a, c, 100, d), b);
-	if (gte(_slogDest, N())) return tet(c, _slogDest, FC(1, 0, 1), d);
+	if (gte(_slogDest, Decimal())) return tet(c, _slogDest, FC(1, 0, 1), d);
 	else if (gte(_slogDest, FC(-1, 0, 1))) return log(tet(c, add(_slogDest, FC(1, 0, 1)), FC(1, 0, 1), d), c);
 	Decimal step1 = tet(c, add(_slogDest, FC(1, 0, 2)), FC(1, 0, 1), d);
 	return log(log(step1, c), c);
@@ -1645,19 +1633,19 @@ Decimal Decimal::slog(Decimal a, Decimal b, int c, bool d) {
 }
 Decimal Decimal::d_slog(Decimal a, Decimal b, int c, bool d) {
 	try {
-		if (lte(b, N())) {
+		if (lte(b, Decimal())) {
 			throw std::domain_error("slog base 0 or base < 0");
 		} else if (eq(b, FC(1, 0, 1))) {
 			throw std::domain_error("slog base 1");
 		} else if (lt(b, FC(1, 0, 1))) {
 			if (eq(a, FC(1, 0, 1))) {
-				return N();
-			} else if (eq(a, N())) {
+				return Decimal();
+			} else if (eq(a, Decimal())) {
 				return FC(-1, 0, 1);
 			} else {
 				throw std::domain_error("slog with a noninteger base of with values 0 < x < 1 are pretty much all imaginary");
 			}
-		} else if (a.mag < 0 || eq(a, N())) {
+		} else if (a.mag < 0 || eq(a, Decimal())) {
 			return FC(-1, 0, 1);
 		} else if (lt(b, FC(1, 0, MAGIC_CONSTANT))) {
 			if (eq(a, div(lambertw(neg(ln(b))), neg(ln(b))))) throw std::domain_error("lambert W function of -1/e");
@@ -1675,7 +1663,7 @@ Decimal Decimal::d_slog(Decimal a, Decimal b, int c, bool d) {
 		_payload.layer -= _payload.layer - b.layer - 3;
 	}
 	for (int i = 0; i < c; ++i) {
-		if (lt(_payload, N())) {
+		if (lt(_payload, Decimal())) {
 			_payload = pow(b, _payload);
 			_result -= 1;
 		} else if (lte(_payload, FC(1, 0, 1))) {
@@ -1693,7 +1681,7 @@ Decimal Decimal::d_slog(Decimal a, Decimal b, int c, bool d) {
 //god no I hate std::variant it sucks
 std::vector<std::variant<Decimal, int>> Decimal::e_slog(Decimal a, Decimal b, bool c) {
 	try {
-		if (eq(b, FC(1, 0, 1)) || lte(b, N())) throw std::domain_error("slog base 1 or base <= 0");
+		if (eq(b, FC(1, 0, 1)) || lte(b, Decimal())) throw std::domain_error("slog base 1 or base <= 0");
 		if (gt(b, I(MAGIC_CONSTANT))) return {slog(a, b, 100, c), 0};
 		Decimal _upper = INF;
 		Decimal _negln = neg(ln(b));
@@ -1736,7 +1724,7 @@ std::vector<std::variant<Decimal, int>> Decimal::e_slog(Decimal a, Decimal b, bo
 			}
 
 			double _fracHeight = 0.0, _tested = 0.0, _stepSize = 0.5;
-			Decimal _towerTop = _slogZero, _guess = N();
+			Decimal _towerTop = _slogZero, _guess = Decimal();
 			while (_stepSize > 1e-16) {
 				_tested = _fracHeight + _stepSize;
 				//geometric average kinda
@@ -1777,7 +1765,7 @@ std::vector<std::variant<Decimal, int>> Decimal::e_slog(Decimal a, Decimal b, bo
 				}
 			}
 			double _fracHeight = 0.0, _tested = 0.0, _stepSize = 0.5;
-			Decimal _towerTop = _slogZero, _guess = N();
+			Decimal _towerTop = _slogZero, _guess = Decimal();
 			while (_stepSize > 1e-16) {
 				_tested = _fracHeight + _stepSize;
 				//geometric average kinda
@@ -1795,17 +1783,17 @@ std::vector<std::variant<Decimal, int>> Decimal::e_slog(Decimal a, Decimal b, bo
 		std::cerr << "\033[31m" << "Domain error: " << e.what() << "\033[0m" << std::endl;
 	}
 	std::cerr << "\033[31m" << "You somehow managed to jump over all of the conditions and ran into this unhandled crap" << "\033[31m" << std::endl;
-	return {N(), 0};
+	return {Decimal(), 0};
 }
 
 Decimal Decimal::itLog(Decimal a, Decimal b, Decimal c, bool d) {
 	try {
-		if (lte(b, N()) || eq(b, FC(1, 0, 1))) throw std::domain_error("itLog's base can only output imaginary values");
+		if (lte(b, Decimal()) || eq(b, FC(1, 0, 1))) throw std::domain_error("itLog's base can only output imaginary values");
 	}
 	catch (const std::domain_error e) {
 		std::cerr << "\033[31m" << "Domain error: " << e.what() << "\033[0m" << std::endl;
 	}
-	if (lt(c, N())) return tet(b, neg(c), a, d);
+	if (lt(c, Decimal())) return tet(b, neg(c), a, d);
 	Decimal _payload = a;
 	long long _truncC = std::trunc(toLongLong(c));
 	double _fracC = toDouble(c) - _truncC;
@@ -1835,15 +1823,15 @@ Decimal Decimal::logN(Decimal a, Decimal b, Decimal c, bool d) {
 }
 
 Decimal Decimal::repLog10(Decimal a, Decimal b) {
-	if (eq(b, N())) return a;
+	if (eq(b, Decimal())) return a;
 	//I will add a tet10 function at some point, I am lazy right now
-	else if (lt(b, N())) return tet(FC(1, 0, 10), neg(b), a, false);
+	else if (lt(b, Decimal())) return tet(FC(1, 0, 10), neg(b), a, false);
 	Decimal _payload = a;
 	long long _truncB = toLongLong(b), _layerDiff = a.layer - _truncB;
 	double _fracB = toDouble(b) - _truncB;
-	if (_layerDiff < 0) return N();
+	if (_layerDiff < 0) return Decimal();
 
-	if (gt(_fracB, N()), lt(_fracB, FC(1, 0, 1))) {
+	if (gt(_fracB, Decimal()), lt(_fracB, FC(1, 0, 1))) {
 		if (_layerDiff == 0) return FC(1, 0, a.layer + _fracB);
 
 		double _newMag = std::pow(10, LAYER_LIMIT * _fracB) - 1;
@@ -1854,4 +1842,7 @@ Decimal Decimal::repLog10(Decimal a, Decimal b) {
 		if (_layerDiff == 0) return FC(1, 0, a.layer);
 		return FC(a.sign, _layerDiff, a.mag);
 	}
+}
+Decimal Decimal::rLog10(Decimal a, Decimal b) {
+	return repLog10(a, b);
 }
