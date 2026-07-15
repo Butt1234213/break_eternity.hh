@@ -7,7 +7,7 @@ it supports numbers from -10^^9e15 -> 10^^9e15
 
 Add the break_eternity.hh and break_eternity.cpp files to your C++ project's file directory
 
-Add these two lines of code on your main file
+Add this line of code on your main file
 
 #include "break_eternity.hh"
 
