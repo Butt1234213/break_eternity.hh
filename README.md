@@ -1,6 +1,8 @@
 # break_eternity.hh
 break_eternity.hh is a port of break_eternity.js to C++
 
+it supports numbers from -10^^9e15 -> 10^^9e15
+
 # How to install
 
 Add the break_eternity.hh and break_eternity.cpp files to your C++ project's file directory
